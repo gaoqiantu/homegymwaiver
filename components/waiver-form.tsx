@@ -34,12 +34,6 @@ export function WaiverForm({ onSuccess }: WaiverFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const signaturePadRef = useRef<SignaturePadRef>(null)
 
-  // #region agent log
-  const debugLog = (location: string, message: string, data: Record<string, unknown>, hypothesisId: string) => {
-    fetch('http://127.0.0.1:7244/ingest/38b9ffd5-17e1-41de-990c-d6f0876091b0',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location,message,data,timestamp:Date.now(),sessionId:'debug-session',hypothesisId})}).catch(()=>{});
-  };
-  // #endregion
-
   const form = useForm<WaiverFormValues>({
     resolver: zodResolver(waiverSchema),
     defaultValues: {
@@ -54,28 +48,13 @@ export function WaiverForm({ onSuccess }: WaiverFormProps) {
     },
   })
 
-  // #region agent log
-  // Log form errors on every render
-  const formErrors = form.formState.errors;
-  if (Object.keys(formErrors).length > 0) {
-    debugLog('waiver-form.tsx:formErrors', 'Form has validation errors', { errors: JSON.stringify(formErrors) }, 'H6');
-  }
-  // #endregion
-
   const onSubmit = async (data: WaiverFormValues) => {
-    // #region agent log
-    debugLog('waiver-form.tsx:onSubmit', 'onSubmit called', { data, hasScrolledToBottom, hasSignature }, 'H3,H4');
-    // #endregion
-
     if (!hasScrolledToBottom) {
       toast.error(t('scrollRequired'))
       return
     }
 
     const signature = signaturePadRef.current?.getDataURL()
-    // #region agent log
-    debugLog('waiver-form.tsx:onSubmit', 'signature retrieved', { hasSignature: !!signature, signatureLength: signature?.length || 0 }, 'H2');
-    // #endregion
     if (!signature) {
       toast.error(t('signatureRequired'))
       return
@@ -84,9 +63,6 @@ export function WaiverForm({ onSuccess }: WaiverFormProps) {
     setIsSubmitting(true)
     
     try {
-      // #region agent log
-      debugLog('waiver-form.tsx:onSubmit', 'calling submitWaiver', { fullName: data.fullName, email: data.email }, 'H5');
-      // #endregion
       const result = await submitWaiver({
         fullName: data.fullName,
         email: data.email,
@@ -97,9 +73,6 @@ export function WaiverForm({ onSuccess }: WaiverFormProps) {
         agreed: true,
         language,
       })
-      // #region agent log
-      debugLog('waiver-form.tsx:onSubmit', 'submitWaiver returned', { result }, 'H5');
-      // #endregion
 
       if (result.success) {
         toast.success(t('successTitle'), {
@@ -122,11 +95,7 @@ export function WaiverForm({ onSuccess }: WaiverFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
-        // #region agent log
-        debugLog('waiver-form.tsx:onInvalid', 'Form validation failed', { errors: Object.keys(errors), errorDetails: JSON.stringify(errors) }, 'H6');
-        // #endregion
-      })} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {/* Personal Information */}
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField
@@ -210,12 +179,7 @@ export function WaiverForm({ onSuccess }: WaiverFormProps) {
 
         {/* Legal Text */}
         <LegalText
-          onScrolledToBottom={() => {
-            // #region agent log
-            debugLog('waiver-form.tsx:LegalText', 'onScrolledToBottom triggered', { previous: hasScrolledToBottom }, 'H1');
-            // #endregion
-            setHasScrolledToBottom(true);
-          }}
+          onScrolledToBottom={() => setHasScrolledToBottom(true)}
           hasScrolledToBottom={hasScrolledToBottom}
         />
 
@@ -251,12 +215,7 @@ export function WaiverForm({ onSuccess }: WaiverFormProps) {
           <p className="text-sm text-muted-foreground">{t('signatureInstructions')}</p>
           <SignaturePad
             ref={signaturePadRef}
-            onSignatureChange={(hasSig) => {
-              // #region agent log
-              debugLog('waiver-form.tsx:SignaturePad', 'onSignatureChange triggered', { hasSignature: hasSig }, 'H2');
-              // #endregion
-              setHasSignature(hasSig);
-            }}
+            onSignatureChange={setHasSignature}
           />
           {!hasSignature && form.formState.isSubmitted && (
             <p className="text-sm font-medium text-destructive">{t('signatureRequired')}</p>
@@ -264,19 +223,11 @@ export function WaiverForm({ onSuccess }: WaiverFormProps) {
         </div>
 
         {/* Submit Button */}
-        {/* #region agent log */}
-        {(() => { debugLog('waiver-form.tsx:render', 'Button state', { isSubmitting, hasScrolledToBottom, hasSignature, disabled: isSubmitting || !hasScrolledToBottom || !hasSignature }, 'H1,H2'); return null; })()}
-        {/* #endregion */}
         <Button
           type="submit"
           size="lg"
           className="w-full"
           disabled={isSubmitting || !hasScrolledToBottom || !hasSignature}
-          onClick={() => {
-            // #region agent log
-            debugLog('waiver-form.tsx:Button', 'Submit button clicked', { isSubmitting, hasScrolledToBottom, hasSignature }, 'H4');
-            // #endregion
-          }}
         >
           {isSubmitting ? (
             <>

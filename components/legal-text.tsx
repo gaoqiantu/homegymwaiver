@@ -6,12 +6,6 @@ import { WAIVER_SECTIONS } from '@/lib/constants'
 import { CheckCircle2, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-// #region agent log
-const debugLog = (location: string, message: string, data: Record<string, unknown>, hypothesisId: string) => {
-  fetch('http://127.0.0.1:7244/ingest/38b9ffd5-17e1-41de-990c-d6f0876091b0',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location,message,data,timestamp:Date.now(),sessionId:'debug-session',hypothesisId})}).catch(()=>{});
-};
-// #endregion
-
 interface LegalTextProps {
   onScrolledToBottom: () => void
   hasScrolledToBottom: boolean
@@ -24,23 +18,14 @@ export function LegalText({ onScrolledToBottom, hasScrolledToBottom }: LegalText
 
   const checkScrollPosition = useCallback(() => {
     const element = scrollRef.current
-    // #region agent log
-    debugLog('legal-text.tsx:checkScrollPosition', 'called', { hasElement: !!element }, 'H1');
-    // #endregion
     if (!element) return
 
     const { scrollTop, scrollHeight, clientHeight } = element
     const isAtBottom = scrollTop + clientHeight >= scrollHeight - 30
-    // #region agent log
-    debugLog('legal-text.tsx:checkScrollPosition', 'scroll values', { scrollTop, scrollHeight, clientHeight, isAtBottom, hasScrolledToBottom }, 'H1');
-    // #endregion
 
     setIsNearBottom(scrollTop + clientHeight >= scrollHeight - 100)
 
     if (isAtBottom && !hasScrolledToBottom) {
-      // #region agent log
-      debugLog('legal-text.tsx:checkScrollPosition', 'calling onScrolledToBottom', {}, 'H1');
-      // #endregion
       onScrolledToBottom()
     }
   }, [hasScrolledToBottom, onScrolledToBottom])
