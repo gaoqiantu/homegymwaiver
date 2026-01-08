@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useCallback, useState } from 'react'
+import { useRef, useCallback, useState, useEffect } from 'react'
 import { useTranslation } from '@/hooks/use-translation'
 import { WAIVER_SECTIONS } from '@/lib/constants'
 import { CheckCircle2, ChevronDown } from 'lucide-react'
@@ -16,12 +16,12 @@ export function LegalText({ onScrolledToBottom, hasScrolledToBottom }: LegalText
   const [isNearBottom, setIsNearBottom] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  const handleScroll = useCallback(() => {
+  const checkScrollPosition = useCallback(() => {
     const element = scrollRef.current
     if (!element) return
 
     const { scrollTop, scrollHeight, clientHeight } = element
-    const isAtBottom = scrollTop + clientHeight >= scrollHeight - 20
+    const isAtBottom = scrollTop + clientHeight >= scrollHeight - 30
 
     setIsNearBottom(scrollTop + clientHeight >= scrollHeight - 100)
 
@@ -29,6 +29,14 @@ export function LegalText({ onScrolledToBottom, hasScrolledToBottom }: LegalText
       onScrolledToBottom()
     }
   }, [hasScrolledToBottom, onScrolledToBottom])
+
+  // Check on mount in case content is short
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      checkScrollPosition()
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [checkScrollPosition])
 
   return (
     <div className="space-y-2">
@@ -53,8 +61,9 @@ export function LegalText({ onScrolledToBottom, hasScrolledToBottom }: LegalText
       >
         <div 
           ref={scrollRef}
-          className="h-80 overflow-y-auto p-4"
-          onScroll={handleScroll}
+          className="h-80 overflow-y-auto p-4 overscroll-contain"
+          onScroll={checkScrollPosition}
+          onTouchMove={checkScrollPosition}
         >
           <div className="space-y-6">
             {WAIVER_SECTIONS.map((section, index) => (
@@ -68,6 +77,8 @@ export function LegalText({ onScrolledToBottom, hasScrolledToBottom }: LegalText
                 </div>
               </div>
             ))}
+            {/* Extra padding at bottom to ensure scroll detection works */}
+            <div className="h-4" />
           </div>
         </div>
         {!isNearBottom && !hasScrolledToBottom && (
