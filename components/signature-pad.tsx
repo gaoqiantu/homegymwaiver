@@ -6,6 +6,12 @@ import { Button } from '@/components/ui/button'
 import { useTranslation } from '@/hooks/use-translation'
 import { Eraser } from 'lucide-react'
 
+// #region agent log
+const debugLog = (location: string, message: string, data: Record<string, unknown>, hypothesisId: string) => {
+  fetch('http://127.0.0.1:7244/ingest/38b9ffd5-17e1-41de-990c-d6f0876091b0',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location,message,data,timestamp:Date.now(),sessionId:'debug-session',hypothesisId})}).catch(()=>{});
+};
+// #endregion
+
 export interface SignaturePadRef {
   clear: () => void
   getDataURL: () => string
@@ -43,7 +49,13 @@ export const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
     }
 
     const handleEnd = () => {
+      // #region agent log
+      debugLog('signature-pad.tsx:handleEnd', 'called', { hasCanvas: !!sigCanvasRef.current }, 'H2');
+      // #endregion
       const isEmpty = sigCanvasRef.current?.isEmpty() ?? true
+      // #region agent log
+      debugLog('signature-pad.tsx:handleEnd', 'isEmpty check', { isEmpty }, 'H2');
+      // #endregion
       onSignatureChange?.(!isEmpty)
     }
 

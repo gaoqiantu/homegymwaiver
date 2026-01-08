@@ -6,7 +6,7 @@ export const waiverSchema = z.object({
   phone: z.string().min(10, 'Please enter a valid phone number'),
   emergencyContactName: z.string().min(2, 'Emergency contact name must be at least 2 characters'),
   emergencyContactPhone: z.string().min(10, 'Please enter a valid phone number'),
-  signature: z.string().min(1, 'Please provide your signature'),
+  signature: z.string().optional(), // Validated manually in onSubmit via SignaturePad ref
   agreed: z.boolean().refine((val) => val === true, {
     message: 'You must agree to the terms',
   }),
