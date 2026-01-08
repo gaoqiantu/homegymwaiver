@@ -121,13 +121,13 @@ export async function submitWaiver(data: WaiverFormData): Promise<SubmitWaiverRe
       // Continue even if email fails - waiver is saved
     }
 
-    // Send notification email to admin
-    const adminEmail = process.env.ADMIN_EMAIL
-    if (adminEmail) {
+    // Send notification email to admin(s) - supports multiple emails separated by comma
+    const adminEmails = process.env.ADMIN_EMAIL?.split(',').map(email => email.trim()).filter(Boolean)
+    if (adminEmails && adminEmails.length > 0) {
       try {
         await resend.emails.send({
           from: 'K&K Studio <onboarding@resend.dev>',
-          to: adminEmail,
+          to: adminEmails,
           subject: `[K&K Studio] New Waiver Signed by ${validatedData.fullName}`,
           html: `
             <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
