@@ -22,6 +22,11 @@ export async function submitWaiver(data: WaiverFormData): Promise<SubmitWaiverRe
     // Initialize Supabase client with service role
     const supabase = await createServiceClient()
 
+    // Ensure signature is provided
+    if (!validatedData.signature) {
+      return { success: false, error: 'Signature is required' }
+    }
+
     // Decode base64 signature and upload to storage
     const base64Data = validatedData.signature.replace(/^data:image\/png;base64,/, '')
     const signatureBuffer = Buffer.from(base64Data, 'base64')
