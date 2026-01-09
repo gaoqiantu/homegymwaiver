@@ -114,7 +114,7 @@ export async function submitWaiver(data: WaiverFormData): Promise<SubmitWaiverRe
 
     try {
       await resend.emails.send({
-        from: 'K&K Studio <onboarding@resend.dev>',
+        from: 'K&K Studio <noreply@kkstudioatl.serviceless.ai>',
         to: validatedData.email,
         subject: validatedData.language === 'zh' 
           ? 'K&K Studio 免责声明副本' 
@@ -131,7 +131,7 @@ export async function submitWaiver(data: WaiverFormData): Promise<SubmitWaiverRe
     if (adminEmails && adminEmails.length > 0) {
       try {
         await resend.emails.send({
-          from: 'K&K Studio <onboarding@resend.dev>',
+          from: 'K&K Studio <noreply@kkstudioatl.serviceless.ai>',
           to: adminEmails,
           subject: `[K&K Studio] New Waiver Signed by ${validatedData.fullName}`,
           html: `
