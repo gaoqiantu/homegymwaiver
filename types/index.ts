@@ -10,6 +10,12 @@ export interface Waiver {
   user_agent: string
   agreed_at: string
   language_used: 'en' | 'zh'
+  waiver_version?: string
+}
+
+export interface DeleteWaiverResult {
+  success: boolean
+  error?: string
 }
 
 export interface WaiverFormData {

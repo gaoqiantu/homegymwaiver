@@ -8,7 +8,10 @@ import {
   Eye, 
   FileText,
   Users,
-  Calendar
+  Calendar,
+  Trash2,
+  Loader2,
+  AlertTriangle
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -21,19 +24,32 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { WaiverDetailsModal } from '@/components/waiver-details-modal'
 import { createClient } from '@/lib/supabase/client'
+import { deleteWaiver } from '@/lib/actions'
 import { Waiver } from '@/types'
+import { toast } from 'sonner'
 
 interface AdminDashboardProps {
   waivers: Waiver[]
   userEmail: string
 }
 
-export function AdminDashboard({ waivers, userEmail }: AdminDashboardProps) {
+export function AdminDashboard({ waivers: initialWaivers, userEmail }: AdminDashboardProps) {
   const router = useRouter()
+  const [waivers, setWaivers] = useState<Waiver[]>(initialWaivers)
   const [selectedWaiver, setSelectedWaiver] = useState<Waiver | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [deleteConfirmWaiver, setDeleteConfirmWaiver] = useState<Waiver | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const handleLogout = async () => {
     const supabase = createClient()
@@ -45,6 +61,33 @@ export function AdminDashboard({ waivers, userEmail }: AdminDashboardProps) {
   const handleViewDetails = (waiver: Waiver) => {
     setSelectedWaiver(waiver)
     setIsModalOpen(true)
+  }
+
+  const handleDeleteFromTable = async () => {
+    if (!deleteConfirmWaiver) return
+    
+    setIsDeleting(true)
+    try {
+      const result = await deleteWaiver(deleteConfirmWaiver.id)
+      if (result.success) {
+        toast.success('Waiver deleted successfully')
+        setWaivers(prev => prev.filter(w => w.id !== deleteConfirmWaiver.id))
+        setDeleteConfirmWaiver(null)
+      } else {
+        toast.error(result.error || 'Failed to delete waiver')
+      }
+    } catch {
+      toast.error('An unexpected error occurred')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const handleDeletedFromModal = () => {
+    if (selectedWaiver) {
+      setWaivers(prev => prev.filter(w => w.id !== selectedWaiver.id))
+      setSelectedWaiver(null)
+    }
   }
 
   const handleExportCSV = () => {
@@ -60,6 +103,7 @@ export function AdminDashboard({ waivers, userEmail }: AdminDashboardProps) {
       'IP Address',
       'User Agent',
       'Language',
+      'Waiver Version',
       'Signed At',
       'Signature URL'
     ]
@@ -76,6 +120,7 @@ export function AdminDashboard({ waivers, userEmail }: AdminDashboardProps) {
         w.ip_address,
         `"${w.user_agent.replace(/"/g, '""')}"`,
         w.language_used,
+        w.waiver_version || '',
         w.agreed_at,
         w.signature_url
       ].join(','))
@@ -232,14 +277,24 @@ export function AdminDashboard({ waivers, userEmail }: AdminDashboardProps) {
                           </TableCell>
                           <TableCell>{formatDate(waiver.agreed_at)}</TableCell>
                           <TableCell className="text-right">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleViewDetails(waiver)}
-                            >
-                              <Eye className="mr-2 h-4 w-4" />
-                              View
-                            </Button>
+                            <div className="flex items-center justify-end gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleViewDetails(waiver)}
+                              >
+                                <Eye className="mr-1 h-4 w-4" />
+                                View
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => setDeleteConfirmWaiver(waiver)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -257,7 +312,50 @@ export function AdminDashboard({ waivers, userEmail }: AdminDashboardProps) {
         waiver={selectedWaiver}
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
+        onDeleted={handleDeletedFromModal}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deleteConfirmWaiver} onOpenChange={(open) => !open && setDeleteConfirmWaiver(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              Delete Waiver
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete the waiver for <strong>{deleteConfirmWaiver?.full_name}</strong>? 
+              This action cannot be undone and will also delete the signature file.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteConfirmWaiver(null)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteFromTable}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   )
 }

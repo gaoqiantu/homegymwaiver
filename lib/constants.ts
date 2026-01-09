@@ -1,3 +1,22 @@
+export const WAIVER_VERSION = '1.0'
+
+// Helper function to generate waiver HTML for emails
+export function generateWaiverHtml(): string {
+  return WAIVER_SECTIONS.map(section => `
+    <div style="margin-bottom: 20px;">
+      <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: bold; color: #1a1a1a;">
+        ${section.titleEn} / ${section.titleZh}
+      </h3>
+      <p style="margin: 0 0 6px 0; font-size: 12px; line-height: 1.6; color: #374151; white-space: pre-line;">
+        ${section.contentEn}
+      </p>
+      <p style="margin: 0; font-size: 12px; line-height: 1.6; color: #6b7280; white-space: pre-line;">
+        ${section.contentZh}
+      </p>
+    </div>
+  `).join('')
+}
+
 export const WAIVER_SECTIONS = [
   {
     titleEn: "1. Language Validity",
